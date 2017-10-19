@@ -1,0 +1,15 @@
+[package]
+authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
+name = "uuid-b64"
+version = "0.1.0"
+
+[dependencies]
+base64 = "0.7.0"
+error-chain = "0.11.0"
+lazy_static = "0.2.9"
+serde = { version = "1.0.15", optional = true }
+uuid = { version = "0.5.1", features = ["use_std", "v4"] }
+
+[dev-dependencies]
+serde_json = "1.0"
+serde_derive = "1.0"
