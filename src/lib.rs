@@ -89,6 +89,7 @@
 extern crate base64;
 #[macro_use]
 extern crate error_chain;
+extern crate inlinable_string;
 #[macro_use]
 extern crate lazy_static;
 extern crate uuid;
@@ -107,6 +108,7 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use uuid::Uuid;
 use base64::{CharacterSet, Config, LineWrap};
 use base64::display::Base64Display;
+use inlinable_string::inline_string::InlineString;
 
 use errors::{ErrorKind, ResultExt};
 
@@ -118,7 +120,7 @@ lazy_static! {
     static ref B64_CONFIG: Config = Config::new(
         CharacterSet::UrlSafe,
         false,
-        true,
+        false,
         LineWrap::NoWrap,
     );
 }
@@ -136,6 +138,37 @@ impl UuidB64 {
     /// Get the raw UUID out
     pub fn uuid(&self) -> Uuid {
         self.0
+    }
+
+    /// Convert this to a new [`InlineString`][]
+    ///
+    /// `InlineString`s are stack-allocated and therefore faster than
+    /// heap-allocated Strings. How much faster? Somewhat faster:
+    ///
+    /// ```text
+    /// test uuidb64_to_inline_string                 ... bench:          49 ns/iter (+/- 20)
+    /// test uuidb64_to_inline_string_new_id_per_loop ... bench:         146 ns/iter (+/- 23)
+    /// test uuidb64_to_string                        ... bench:         151 ns/iter (+/- 28)
+    /// test uuidb64_to_string_new_id_per_loop        ... bench:         268 ns/iter (+/- 144)
+    /// ```
+    ///
+    /// Honestly this is unlikely to matter for your use case, but since B64
+    /// UUIDs have a serialization that *does* fit within the InlineString
+    /// limit (where the regular UUID representation does not) it felt like a
+    /// waste to not do this.
+    ///
+    /// [`InlineString`]: https://docs.rs/inlinable_string/0.1.9/inlinable_string/inline_string/index.html
+    pub fn to_istring(&self) -> InlineString {
+        let mut buf = InlineString::from("0000000000000000000000");  // not actually zeroes
+        unsafe {
+            let raw_buf = buf.as_mut_slice();
+            base64::encode_config_slice(self.0.as_bytes(), *B64_CONFIG, &mut raw_buf[0..22]);
+        }
+        buf
+    }
+
+    pub fn to_buf(&self, buffer: &mut String) {
+        base64::encode_config_buf(self.0.as_bytes(), *B64_CONFIG, buffer);
     }
 }
 
@@ -197,5 +230,17 @@ mod tests {
     #[test]
     fn from_uuid_works() {
         let _ = UuidB64::from(Uuid::new_v4());
+    }
+
+    #[test]
+    fn to_istring_works() {
+        let b64 = UuidB64::from(
+            Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap());
+        assert_eq!(b64.to_istring(), "sMHuhm9GTxuNi3hJ51287g");
+
+        for _ in 0..10 {
+            let b64 = UuidB64::new();
+            b64.to_istring();
+        }
     }
 }

@@ -12,7 +12,7 @@ impl Serialize for UuidB64 {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        serializer.serialize_str(&self.to_istring())
     }
 }
 
