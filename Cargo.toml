@@ -2,6 +2,9 @@
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 name = "uuid-b64"
 version = "0.1.0"
+license = "Apache-2.0/MIT"
+readme = "README.md"
+categories = ["encoding"]
 
 [dependencies]
 base64 = { git = "https://github.com/quodlibetor/rust-base64", branch = "add-encode_config_slice" }
