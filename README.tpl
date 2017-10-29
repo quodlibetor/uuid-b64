@@ -4,6 +4,13 @@
 
 # Contributing
 
+## Testing
+
+Most tests are standard: `cargo test` or `cargo test --features serde`, but if
+you want to test the diesel integration then we need a running postgres
+instance. Assuming that you have docker running locally and are in bash you can
+do `./run-tests.sh` to execute all tests.
+
 ## License
 
 Licensed under either of

@@ -17,7 +17,7 @@ serde = { version = "1.0.15", optional = true }
 uuid = { version = "0.5.1", features = ["use_std", "v4"] }
 
 [features]
-diesel-b64 = ["diesel-newtype", "diesel"]
+diesel-uuid = ["diesel-newtype", "diesel"]
 
 [dev-dependencies]
 serde_json = "1.0"

@@ -85,8 +85,13 @@
 //! ## Features
 //!
 //! * `serde` enables serialization/deserialization via Serde.
+//! * `diesel-uuid` enables integration with Diesel's UUID support, this is
+//!   only tested on postgres, PRs welcome for other DBs.
 
 extern crate base64;
+#[cfg(feature = "diesel")]
+#[macro_use]
+extern crate diesel_newtype;
 #[macro_use]
 extern crate error_chain;
 extern crate inlinable_string;
@@ -94,6 +99,12 @@ extern crate inlinable_string;
 extern crate lazy_static;
 extern crate uuid;
 
+#[cfg(all(test, feature = "diesel-uuid"))]
+#[macro_use]
+extern crate diesel;
+#[cfg(all(test, feature = "diesel-uuid"))]
+#[macro_use]
+extern crate diesel_codegen;
 #[cfg(all(test, feature = "serde"))]
 #[macro_use]
 extern crate serde_derive;
@@ -126,7 +137,8 @@ lazy_static! {
 }
 
 /// It's a Uuid that displays as Base 64
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "diesel", derive(DieselNewType))]
 pub struct UuidB64(uuid::Uuid);
 
 impl UuidB64 {
@@ -242,5 +254,69 @@ mod tests {
             let b64 = UuidB64::new();
             b64.to_istring();
         }
+    }
+}
+
+#[cfg(all(test, feature = "diesel-uuid"))]
+mod diesel_tests {
+    use diesel;
+    use diesel::prelude::*;
+    use diesel::expression::sql;
+    use diesel::pg::PgConnection;
+
+    use std::env;
+
+    use super::UuidB64;
+
+    #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
+    #[table_name = "my_entities"]
+    pub struct MyEntity {
+        id: UuidB64,
+        val: i32,
+    }
+
+    table! {
+        my_entities {
+            id -> Uuid,
+            val -> Integer,
+        }
+    }
+
+    #[cfg(test)]
+    fn setup() -> PgConnection {
+        let db_url = env::var("PG_DATABASE_URL").unwrap();
+        let conn = PgConnection::establish(&db_url).unwrap();
+        let setup = sql::<diesel::types::Bool>(
+            "CREATE TABLE IF NOT EXISTS my_entities (
+                id UUID PRIMARY KEY,
+                val Int
+         )",
+        );
+        setup.execute(&conn).expect("Can't create table");
+        conn
+    }
+
+    #[test]
+    fn does_roundtrip() {
+        use self::my_entities::dsl::*;
+
+        let conn = setup();
+
+        let obj = MyEntity {
+            id: UuidB64::new(),
+            val: 1,
+        };
+
+        diesel::insert(&obj)
+            .into(my_entities)
+            .execute(&conn)
+            .expect("Couldn't insert struct into my_entities");
+
+        let found: Vec<MyEntity> = my_entities.load(&conn).unwrap();
+        assert_eq!(found[0], obj);
+
+        diesel::delete(my_entities.filter(id.eq(&obj.id)))
+            .execute(&conn)
+            .expect("Couldn't delete existing object");
     }
 }

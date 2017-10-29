@@ -81,8 +81,17 @@ to create one from an existing UUID.
 ### Features
 
 * `serde` enables serialization/deserialization via Serde.
+* `diesel-uuid` enables integration with Diesel's UUID support, this is
+  only tested on postgres, PRs welcome for other DBs.
 
 # Contributing
+
+## Testing
+
+Most tests are standard: `cargo test` or `cargo test --features serde`, but if
+you want to test the diesel integration then we need a running postgres
+instance. Assuming that you have docker running locally and are in bash you can
+do `./run-tests.sh` to execute all tests.
 
 ## License
 
