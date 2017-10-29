@@ -171,7 +171,7 @@ impl UuidB64 {
     ///
     /// [`InlineString`]: https://docs.rs/inlinable_string/0.1.9/inlinable_string/inline_string/index.html
     pub fn to_istring(&self) -> InlineString {
-        let mut buf = InlineString::from("0000000000000000000000");  // not actually zeroes
+        let mut buf = InlineString::from("0000000000000000000000"); // not actually zeroes
         unsafe {
             let raw_buf = buf.as_mut_slice();
             base64::encode_config_slice(self.0.as_bytes(), *B64_CONFIG, &mut raw_buf[0..22]);
@@ -246,8 +246,7 @@ mod tests {
 
     #[test]
     fn to_istring_works() {
-        let b64 = UuidB64::from(
-            Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap());
+        let b64 = UuidB64::from(Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap());
         assert_eq!(b64.to_istring(), "sMHuhm9GTxuNi3hJ51287g");
 
         for _ in 0..10 {

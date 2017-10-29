@@ -3,7 +3,7 @@
 extern crate test;
 extern crate uuid_b64;
 
-use test::{Bencher, black_box};
+use test::{black_box, Bencher};
 
 use uuid_b64::UuidB64;
 
