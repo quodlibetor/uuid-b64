@@ -119,8 +119,8 @@ mod serde_impl;
 lazy_static! {
     static ref B64_CONFIG: Config = Config::new(
         CharacterSet::UrlSafe,
-        false,
-        false,
+        false, // pad?
+        false, // trim whitespace?
         LineWrap::NoWrap,
     );
 }
@@ -135,7 +135,7 @@ impl UuidB64 {
         UuidB64(Uuid::new_v4())
     }
 
-    /// Get the raw UUID out
+    /// Copy the raw UUID out
     pub fn uuid(&self) -> Uuid {
         self.0
     }

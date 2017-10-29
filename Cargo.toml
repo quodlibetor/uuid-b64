@@ -8,12 +8,19 @@ categories = ["encoding"]
 
 [dependencies]
 base64 = { git = "https://github.com/quodlibetor/rust-base64", branch = "add-encode_config_slice" }
+diesel-newtype = { git = "https://github.com/quodlibetor/diesel-newtype", optional = true }
+diesel = { version = "0.16", features = ["uuid"], optional = true }
 error-chain = "0.11.0"
+inlinable_string = { version = "0.1.0", features = ["serde"] }
 lazy_static = "0.2.9"
 serde = { version = "1.0.15", optional = true }
 uuid = { version = "0.5.1", features = ["use_std", "v4"] }
-inlinable_string = { version = "0.1.0", features = ["serde"] }
+
+[features]
+diesel-b64 = ["diesel-newtype", "diesel"]
 
 [dev-dependencies]
 serde_json = "1.0"
 serde_derive = "1.0"
+diesel_codegen = { version = "0.16.0", features = ["postgres"] }
+diesel = { version = "0.16", features = ["postgres", "uuid"] }
