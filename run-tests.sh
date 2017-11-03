@@ -1,9 +1,14 @@
 #!/bin/bash
 
+set -x
+
 CONTAINER_NAME=b64-postgres
 PG_PASS=test_pass
 PG_PORT=19999
-export PG_DATABASE_URL=postgres://postgres:$PG_PASS@localhost:$PG_PORT
+DOCKER=${DOCKER_HOST:-localhost}
+DOCKER=${DOCKER##*//}
+DOCKER=${DOCKER%%:*}
+export PG_DATABASE_URL=postgres://postgres:$PG_PASS@${DOCKER}:$PG_PORT
 
 run_pg() {
     running=$( docker ps | grep $CONTAINER_NAME | awk '{ print $1 }' )
@@ -30,5 +35,7 @@ do_test() {
 docker_container=$(run_pg)
 
 do_test
+
+docker ps
 
 kill_pg "$docker_container"
