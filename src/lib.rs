@@ -103,8 +103,6 @@ extern crate uuid;
 #[macro_use]
 extern crate diesel;
 #[cfg(all(test, feature = "diesel-uuid"))]
-#[macro_use]
-extern crate diesel_codegen;
 #[cfg(all(test, feature = "serde"))]
 #[macro_use]
 extern crate serde_derive;
@@ -167,7 +165,8 @@ impl UuidB64 {
     /// Honestly this is unlikely to matter for your use case, but since B64
     /// UUIDs have a serialization that *does* fit within the InlineString
     /// limit (where the regular UUID representation does not) it felt like a
-    /// waste to not do this.
+    /// waste to not do this. Also this is what is used for Serde, so we're 
+    /// zero-allocation for that.
     ///
     /// [`InlineString`]: https://docs.rs/inlinable_string/0.1.9/inlinable_string/inline_string/index.html
     pub fn to_istring(&self) -> InlineString {
@@ -184,6 +183,13 @@ impl UuidB64 {
     }
 }
 
+/// Parse a B64 encoded string into a UuidB64
+///
+/// ```rust
+/// # use uuid_b64::UuidB64;
+/// let parsed_b64: UuidB64 = "sMHuhm9GTxuNi3hJ51287g".parse().unwrap();
+/// assert_eq!(format!("{:?}", parsed_b64), "UuidB64(sMHuhm9GTxuNi3hJ51287g)");
+/// ```
 impl FromStr for UuidB64 {
     type Err = errors::ErrorKind;
 
@@ -206,12 +212,38 @@ where
 }
 
 impl Debug for UuidB64 {
+    /// Same as the display formatter, but includes `UuidB64()` around it
+    ///
+    /// ```rust
+    /// # extern crate uuid;
+    /// # extern crate uuid_b64;
+    /// # use uuid::Uuid;
+    /// # use uuid_b64::UuidB64;
+    /// # fn main() {
+    /// let known_id = Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap();
+    /// let as_b64 = UuidB64::from(known_id);
+    /// assert_eq!(format!("{:?}", as_b64), "UuidB64(sMHuhm9GTxuNi3hJ51287g)");
+    /// # }
+    /// ```
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "UuidB64({})", self)
     }
 }
 
 impl Display for UuidB64 {
+    /// Write Base64 encoding of this UUID
+    ///
+    /// ```rust
+    /// # extern crate uuid;
+    /// # extern crate uuid_b64;
+    /// # use uuid::Uuid;
+    /// # use uuid_b64::UuidB64;
+    /// # fn main() {
+    /// let known_id = Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap();
+    /// let as_b64 = UuidB64::from(known_id);
+    /// assert_eq!(format!("{}", as_b64), "sMHuhm9GTxuNi3hJ51287g");
+    /// # }
+    /// ```
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         // can only hit this error if we use an invalid line length
         let wrapper = Base64Display::with_config(self.0.as_bytes(), *B64_CONFIG).unwrap();
@@ -260,7 +292,7 @@ mod tests {
 mod diesel_tests {
     use diesel;
     use diesel::prelude::*;
-    use diesel::expression::sql;
+    use diesel::dsl::sql;
     use diesel::pg::PgConnection;
 
     use std::env;
@@ -283,7 +315,7 @@ mod diesel_tests {
 
     #[cfg(test)]
     fn setup() -> PgConnection {
-        let db_url = env::var("PG_DATABASE_URL").unwrap();
+        let db_url = env::var("PG_DATABASE_URL").expect("PG_DB_URL must be in the environment");
         let conn = PgConnection::establish(&db_url).unwrap();
         let setup = sql::<diesel::types::Bool>(
             "CREATE TABLE IF NOT EXISTS my_entities (
@@ -306,8 +338,8 @@ mod diesel_tests {
             val: 1,
         };
 
-        diesel::insert(&obj)
-            .into(my_entities)
+        diesel::insert_into(my_entities)
+            .values(&obj)
             .execute(&conn)
             .expect("Couldn't insert struct into my_entities");
 

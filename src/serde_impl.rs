@@ -48,7 +48,6 @@ mod tests {
 
     use UuidB64;
 
-
     #[test]
     fn ser_de() {
         let uuid = Uuid::from_fields(0xff, 2, 3, &[1, 2, 3, 4, 5, 6, 7, 8]).unwrap();
