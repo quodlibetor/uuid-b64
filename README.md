@@ -1,5 +1,7 @@
 # uuid-b64
 
+[![Build Status](https://travis-ci.org/quodlibetor/uuid-b64.svg?branch=master)](https://travis-ci.org/quodlibetor/uuid-b64)
+
 A UUID wrapper that has a base64 display and serialization
 
 ## What?
