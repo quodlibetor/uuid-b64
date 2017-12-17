@@ -8,7 +8,7 @@ categories = ["encoding", "value-formatting"]
 repository = "https://github.com/quodlibetor/uuid-b64"
 
 [dependencies]
-base64 = { git = "https://github.com/alicemaz/rust-base64", branch = "encode-slice" }
+base64 = "0.8"
 diesel-derive-newtype = { git = "https://github.com/quodlibetor/diesel-derive-newtype", branch = "diesel-017", optional = true }
 diesel = { version = ">=0.16,<1.0", features = ["uuid"], optional = true }
 error-chain = "0.11.0"
