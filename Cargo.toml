@@ -1,6 +1,7 @@
 [package]
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 name = "uuid-b64"
+description = "Base64 encoding for UUIDs"
 version = "0.1.0"
 license = "Apache-2.0/MIT"
 readme = "README.md"
