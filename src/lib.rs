@@ -165,7 +165,7 @@ impl UuidB64 {
     /// Honestly this is unlikely to matter for your use case, but since B64
     /// UUIDs have a serialization that *does* fit within the InlineString
     /// limit (where the regular UUID representation does not) it felt like a
-    /// waste to not do this. Also this is what is used for Serde, so we're 
+    /// waste to not do this. Also this is what is used for Serde, so we're
     /// zero-allocation for that.
     ///
     /// [`InlineString`]: https://docs.rs/inlinable_string/0.1.9/inlinable_string/inline_string/index.html
@@ -178,6 +178,21 @@ impl UuidB64 {
         buf
     }
 
+    /// Write the Base64-encoded UUID into the provided buffer
+    ///
+    /// ```
+    /// # extern crate uuid;
+    /// # extern crate uuid_b64;
+    /// # use uuid::Uuid;
+    /// # use uuid_b64::UuidB64;
+    /// # fn main() {
+    /// let known_id = Uuid::parse_str("b0c1ee86-6f46-4f1b-8d8b-7849e75dbcee").unwrap();
+    /// let as_b64 = UuidB64::from(known_id);
+    /// let mut buf = String::new();
+    /// as_b64.to_buf(&mut buf);
+    /// assert_eq!(&buf, "sMHuhm9GTxuNi3hJ51287g");
+    /// # }
+    /// ```
     pub fn to_buf(&self, buffer: &mut String) {
         base64::encode_config_buf(self.0.as_bytes(), *B64_CONFIG, buffer);
     }
@@ -201,7 +216,7 @@ impl FromStr for UuidB64 {
     }
 }
 
-/// Right now this is just Uuid, but anything Uuid is comfortable with, we are
+/// Right now this is just `Uuid`, but anything Uuid is comfortable with, we are
 impl<T> From<T> for UuidB64
 where
     T: Into<Uuid>,
