@@ -15,6 +15,7 @@ run_pg() {
     running=$( docker ps | grep $CONTAINER_NAME | awk '{ print $1 }' )
     if [[ -n "$running" ]] ; then
         docker kill "$running"
+        sleep 0.5
     fi
     docker run \
         --rm \
@@ -30,7 +31,7 @@ kill_pg() {
 }
 
 do_test() {
-    cargo test --features "serde diesel-uuid"
+    RUST_BACKTRACE=1 cargo test --features "serde diesel-uuid"
 }
 
 docker_container=$(run_pg)
