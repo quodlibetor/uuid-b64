@@ -7,7 +7,6 @@ use test::{black_box, Bencher};
 
 use uuid_b64::UuidB64;
 
-
 #[bench]
 fn uuidb64_to_string(b: &mut Bencher) {
     let my_uuid = UuidB64::new();
@@ -21,7 +20,6 @@ fn uuidb64_to_inline_string(b: &mut Bencher) {
 
     b.iter(|| black_box(my_uuid.to_istring()));
 }
-
 
 #[bench]
 fn uuidb64_to_string_new_id_per_loop(b: &mut Bencher) {
@@ -38,7 +36,6 @@ fn uuidb64_to_inline_string_new_id_per_loop(b: &mut Bencher) {
         black_box(my_uuid.to_istring());
     });
 }
-
 
 #[bench]
 fn uuidb64_to_buf(b: &mut Bencher) {

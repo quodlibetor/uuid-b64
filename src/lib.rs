@@ -317,6 +317,7 @@ mod diesel_tests {
     fn setup() -> PgConnection {
         let db_url = env::var("PG_DATABASE_URL").expect("PG_DB_URL must be in the environment");
         let conn = PgConnection::establish(&db_url).unwrap();
+        #[allow(deprecated)] // not present in diesel 1.0
         let setup = sql::<diesel::types::Bool>(
             "CREATE TABLE IF NOT EXISTS my_entities (
                 id UUID PRIMARY KEY,
