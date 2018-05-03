@@ -2,7 +2,7 @@
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 name = "uuid-b64"
 description = "Base64 encoding for UUIDs"
-version = "0.1.0"
+version = "0.1.1"
 license = "Apache-2.0/MIT"
 readme = "README.md"
 categories = ["encoding", "value-formatting"]
@@ -20,7 +20,7 @@ inlinable_string = { version = "0.1.0", features = ["serde"] }
 lazy_static = "0.2.9"
 serde = { version = "1.0.15", optional = true }
 # Diesel 1.1.1 doesn't support 0.6.1 yet
-uuid = { version = ">=0.5.1,<0.6.0", features = ["v4", "use_std"] }
+uuid = { version = ">=0.5.1,<0.7.0", features = ["v4", "use_std"] }
 
 [features]
 default-features = ["serde"]
