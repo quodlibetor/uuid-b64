@@ -45,6 +45,7 @@ impl<'de> Visitor<'de> for UuidB64Visitor {
 #[cfg(test)]
 mod tests {
     use serde_derive::Deserialize;
+    use serde_json::json;
     use uuid::Uuid;
 
     use crate::UuidB64;

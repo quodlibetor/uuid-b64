@@ -88,25 +88,6 @@
 //! * `diesel-uuid` enables integration with Diesel's UUID support, this is
 //!   only tested on postgres, PRs welcome for other DBs.
 
-#[cfg(feature = "diesel")]
-#[macro_use]
-extern crate diesel_derive_newtype;
-#[macro_use]
-extern crate error_chain;
-extern crate inlinable_string;
-extern crate uuid;
-
-#[cfg(all(test, feature = "diesel-uuid"))]
-#[macro_use]
-extern crate diesel;
-#[cfg(all(test, feature = "diesel-uuid"))]
-#[cfg(all(test, feature = "serde"))]
-#[macro_use]
-extern crate serde_derive;
-#[cfg(all(test, feature = "serde"))]
-#[macro_use]
-extern crate serde_json;
-
 use std::convert::From;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::str::FromStr;

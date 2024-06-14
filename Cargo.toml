@@ -16,7 +16,7 @@ travis-ci = { repository = "quodlibetor/uuid-b64", branch = "master" }
 base64 = "0.22.0"
 diesel-derive-newtype = { version = "0.1", optional = true }
 diesel = { version = "1.0", features = ["postgres", "uuid"], optional = true }
-error-chain = "0.11.0"
+error-chain = "0.12.0"
 inlinable_string = { version = "0.1.0", features = ["serde"] }
 serde = { version = "1.0.15", optional = true }
 # Diesel 1.1.1 doesn't support 0.6.1 yet
