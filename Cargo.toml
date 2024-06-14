@@ -13,12 +13,11 @@ edition = "2021"
 travis-ci = { repository = "quodlibetor/uuid-b64", branch = "master" }
 
 [dependencies]
-base64 = "0.8"
+base64 = "0.22.0"
 diesel-derive-newtype = { version = "0.1", optional = true }
 diesel = { version = "1.0", features = ["postgres", "uuid"], optional = true }
 error-chain = "0.11.0"
 inlinable_string = { version = "0.1.0", features = ["serde"] }
-lazy_static = "0.2.9"
 serde = { version = "1.0.15", optional = true }
 # Diesel 1.1.1 doesn't support 0.6.1 yet
 uuid = { version = ">=0.5.1,<0.7.0", features = ["v4", "use_std"] }

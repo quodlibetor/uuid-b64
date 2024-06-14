@@ -88,15 +88,12 @@
 //! * `diesel-uuid` enables integration with Diesel's UUID support, this is
 //!   only tested on postgres, PRs welcome for other DBs.
 
-extern crate base64;
 #[cfg(feature = "diesel")]
 #[macro_use]
 extern crate diesel_derive_newtype;
 #[macro_use]
 extern crate error_chain;
 extern crate inlinable_string;
-#[macro_use]
-extern crate lazy_static;
 extern crate uuid;
 
 #[cfg(all(test, feature = "diesel-uuid"))]
@@ -111,28 +108,20 @@ extern crate serde_derive;
 extern crate serde_json;
 
 use std::convert::From;
-use std::str::FromStr;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::str::FromStr;
 
-use uuid::Uuid;
-use base64::{CharacterSet, Config, LineWrap};
 use base64::display::Base64Display;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use inlinable_string::inline_string::InlineString;
+use uuid::Uuid;
 
 use crate::errors::{ErrorKind, ResultExt};
 
 mod errors;
 #[cfg(feature = "serde")]
 mod serde_impl;
-
-lazy_static! {
-    static ref B64_CONFIG: Config = Config::new(
-        CharacterSet::UrlSafe,
-        false, // pad?
-        false, // trim whitespace?
-        LineWrap::NoWrap,
-    );
-}
 
 /// It's a Uuid that displays as Base 64
 #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -173,7 +162,7 @@ impl UuidB64 {
         let mut buf = InlineString::from("0000000000000000000000"); // not actually zeroes
         unsafe {
             let raw_buf = buf.as_mut_slice();
-            base64::encode_config_slice(self.0.as_bytes(), *B64_CONFIG, &mut raw_buf[0..22]);
+            URL_SAFE_NO_PAD.encode_slice(self.0.as_bytes(), &mut raw_buf[0..22]).unwrap();
         }
         buf
     }
@@ -194,7 +183,7 @@ impl UuidB64 {
     /// # }
     /// ```
     pub fn to_buf(&self, buffer: &mut String) {
-        base64::encode_config_buf(self.0.as_bytes(), *B64_CONFIG, buffer);
+        URL_SAFE_NO_PAD.encode_string(self.0.as_bytes(), buffer);
     }
 }
 
@@ -209,8 +198,9 @@ impl FromStr for UuidB64 {
     type Err = errors::ErrorKind;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes =
-            base64::decode_config(s, *B64_CONFIG).chain_err(|| ErrorKind::ParseError(s.into()))?;
+        // TODO: Don't allocated here
+        let bytes = URL_SAFE_NO_PAD.decode(s)
+            .chain_err(|| ErrorKind::ParseError(s.into()))?;
         let id = Uuid::from_bytes(&bytes).chain_err(|| ErrorKind::ParseError(s.into()))?;
         Ok(UuidB64(id))
     }
@@ -260,8 +250,7 @@ impl Display for UuidB64 {
     /// # }
     /// ```
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        // can only hit this error if we use an invalid line length
-        let wrapper = Base64Display::with_config(self.0.as_bytes(), *B64_CONFIG).unwrap();
+        let wrapper = Base64Display::new(self.0.as_bytes(), &URL_SAFE_NO_PAD);
         write!(f, "{}", wrapper)
     }
 }
@@ -306,9 +295,9 @@ mod tests {
 #[cfg(all(test, feature = "diesel-uuid"))]
 mod diesel_tests {
     use diesel;
-    use diesel::prelude::*;
     use diesel::dsl::sql;
     use diesel::pg::PgConnection;
+    use diesel::prelude::*;
 
     use std::env;
 
