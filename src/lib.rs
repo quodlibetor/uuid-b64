@@ -119,7 +119,7 @@ use base64::{CharacterSet, Config, LineWrap};
 use base64::display::Base64Display;
 use inlinable_string::inline_string::InlineString;
 
-use errors::{ErrorKind, ResultExt};
+use crate::errors::{ErrorKind, ResultExt};
 
 mod errors;
 #[cfg(feature = "serde")]

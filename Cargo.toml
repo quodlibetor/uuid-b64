@@ -7,6 +7,7 @@ license = "Apache-2.0/MIT"
 readme = "README.md"
 categories = ["encoding", "value-formatting"]
 repository = "https://github.com/quodlibetor/uuid-b64"
+edition = "2021"
 
 [badges]
 travis-ci = { repository = "quodlibetor/uuid-b64", branch = "master" }
@@ -23,7 +24,7 @@ serde = { version = "1.0.15", optional = true }
 uuid = { version = ">=0.5.1,<0.7.0", features = ["v4", "use_std"] }
 
 [features]
-default-features = ["serde"]
+default = ["serde"]
 diesel-uuid = ["diesel-derive-newtype", "diesel"]
 
 [dev-dependencies]

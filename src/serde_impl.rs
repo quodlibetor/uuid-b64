@@ -2,8 +2,8 @@ extern crate serde;
 
 use std::fmt::{Formatter, Result as FmtResult};
 
-use self::serde::ser::{Serialize, Serializer};
 use self::serde::de::{self, Deserialize, Deserializer, Visitor};
+use self::serde::ser::{Serialize, Serializer};
 
 use super::UuidB64;
 
@@ -44,9 +44,10 @@ impl<'de> Visitor<'de> for UuidB64Visitor {
 
 #[cfg(test)]
 mod tests {
+    use serde_derive::Deserialize;
     use uuid::Uuid;
 
-    use UuidB64;
+    use crate::UuidB64;
 
     #[test]
     fn ser_de() {
