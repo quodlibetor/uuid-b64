@@ -41,9 +41,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: cargo build --features diesel-uuid
+        run: cargo build --features diesel-uuid,serde
 
       - name: Test
-        run: cargo nextest run --features diesel-uuid
+        run: cargo nextest run --features diesel-uuid,serde
         env:
           PG_DATABASE_URL: postgres://postgres:postgres@localhost/postgres

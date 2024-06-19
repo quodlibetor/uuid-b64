@@ -2,8 +2,8 @@ extern crate serde;
 
 use std::fmt::{Formatter, Result as FmtResult};
 
-use self::serde::ser::{Serialize, Serializer};
 use self::serde::de::{self, Deserialize, Deserializer, Visitor};
+use self::serde::ser::{Serialize, Serializer};
 
 use super::UuidB64;
 
@@ -44,13 +44,15 @@ impl<'de> Visitor<'de> for UuidB64Visitor {
 
 #[cfg(test)]
 mod tests {
+    use serde_derive::Deserialize;
+    use serde_json::json;
     use uuid::Uuid;
 
-    use UuidB64;
+    use crate::UuidB64;
 
     #[test]
     fn ser_de() {
-        let uuid = Uuid::from_fields(0xff, 2, 3, &[1, 2, 3, 4, 5, 6, 7, 8]).unwrap();
+        let uuid = Uuid::from_fields(0xff, 2, 3, &[1, 2, 3, 4, 5, 6, 7, 8]);
         let my_id = UuidB64::from(uuid);
 
         let json = json!({ "myid": my_id }).to_string();

@@ -88,55 +88,29 @@
 //! * `diesel-uuid` enables integration with Diesel's UUID support, this is
 //!   only tested on postgres, PRs welcome for other DBs.
 
-extern crate base64;
-#[cfg(feature = "diesel")]
+use std::convert::From;
+use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::str::FromStr;
+
+use base64::display::Base64Display;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
+use inlinable_string::inline_string::InlineString;
+use uuid::Uuid;
+
+#[cfg(feature = "diesel-uuid")]
 #[macro_use]
 extern crate diesel_derive_newtype;
-#[macro_use]
-extern crate error_chain;
-extern crate inlinable_string;
-#[macro_use]
-extern crate lazy_static;
-extern crate uuid;
 
-#[cfg(all(test, feature = "diesel-uuid"))]
-#[macro_use]
-extern crate diesel;
-#[cfg(all(test, feature = "diesel-uuid"))]
-#[cfg(all(test, feature = "serde"))]
-#[macro_use]
-extern crate serde_derive;
-#[cfg(all(test, feature = "serde"))]
-#[macro_use]
-extern crate serde_json;
-
-use std::convert::From;
-use std::str::FromStr;
-use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
-
-use uuid::Uuid;
-use base64::{CharacterSet, Config, LineWrap};
-use base64::display::Base64Display;
-use inlinable_string::inline_string::InlineString;
-
-use errors::{ErrorKind, ResultExt};
+use crate::errors::{ErrorKind, ResultExt};
 
 mod errors;
 #[cfg(feature = "serde")]
 mod serde_impl;
 
-lazy_static! {
-    static ref B64_CONFIG: Config = Config::new(
-        CharacterSet::UrlSafe,
-        false, // pad?
-        false, // trim whitespace?
-        LineWrap::NoWrap,
-    );
-}
-
 /// It's a Uuid that displays as Base 64
 #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "diesel", derive(DieselNewType))]
+#[cfg_attr(feature = "diesel-uuid", derive(DieselNewType))]
 pub struct UuidB64(uuid::Uuid);
 
 impl UuidB64 {
@@ -173,7 +147,7 @@ impl UuidB64 {
         let mut buf = InlineString::from("0000000000000000000000"); // not actually zeroes
         unsafe {
             let raw_buf = buf.as_mut_slice();
-            base64::encode_config_slice(self.0.as_bytes(), *B64_CONFIG, &mut raw_buf[0..22]);
+            URL_SAFE_NO_PAD.encode_slice(self.0.as_bytes(), &mut raw_buf[0..22]).unwrap();
         }
         buf
     }
@@ -194,7 +168,7 @@ impl UuidB64 {
     /// # }
     /// ```
     pub fn to_buf(&self, buffer: &mut String) {
-        base64::encode_config_buf(self.0.as_bytes(), *B64_CONFIG, buffer);
+        URL_SAFE_NO_PAD.encode_string(self.0.as_bytes(), buffer);
     }
 }
 
@@ -209,9 +183,10 @@ impl FromStr for UuidB64 {
     type Err = errors::ErrorKind;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes =
-            base64::decode_config(s, *B64_CONFIG).chain_err(|| ErrorKind::ParseError(s.into()))?;
-        let id = Uuid::from_bytes(&bytes).chain_err(|| ErrorKind::ParseError(s.into()))?;
+        let mut output = [0; 16];
+        URL_SAFE_NO_PAD.decode_slice(s, &mut output)
+            .chain_err(|| ErrorKind::ParseError(s.into()))?;
+        let id = Uuid::from_bytes(output);
         Ok(UuidB64(id))
     }
 }
@@ -260,8 +235,7 @@ impl Display for UuidB64 {
     /// # }
     /// ```
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        // can only hit this error if we use an invalid line length
-        let wrapper = Base64Display::with_config(self.0.as_bytes(), *B64_CONFIG).unwrap();
+        let wrapper = Base64Display::new(self.0.as_bytes(), &URL_SAFE_NO_PAD);
         write!(f, "{}", wrapper)
     }
 }
@@ -306,16 +280,16 @@ mod tests {
 #[cfg(all(test, feature = "diesel-uuid"))]
 mod diesel_tests {
     use diesel;
-    use diesel::prelude::*;
     use diesel::dsl::sql;
     use diesel::pg::PgConnection;
+    use diesel::prelude::*;
 
     use std::env;
 
     use super::UuidB64;
 
     #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
-    #[table_name = "my_entities"]
+    #[diesel(table_name = my_entities)]
     pub struct MyEntity {
         id: UuidB64,
         val: i32,
@@ -331,15 +305,15 @@ mod diesel_tests {
     #[cfg(test)]
     fn setup() -> PgConnection {
         let db_url = env::var("PG_DATABASE_URL").expect("PG_DB_URL must be in the environment");
-        let conn = PgConnection::establish(&db_url).unwrap();
+        let mut conn = PgConnection::establish(&db_url).unwrap();
         #[allow(deprecated)] // not present in diesel 1.0
-        let setup = sql::<diesel::types::Bool>(
+        let setup = sql::<diesel::sql_types::Bool>(
             "CREATE TABLE IF NOT EXISTS my_entities (
                 id UUID PRIMARY KEY,
                 val Int
          )",
         );
-        setup.execute(&conn).expect("Can't create table");
+        setup.execute(&mut conn).expect("Can't create table");
         conn
     }
 
@@ -347,7 +321,7 @@ mod diesel_tests {
     fn does_roundtrip() {
         use self::my_entities::dsl::*;
 
-        let conn = setup();
+        let mut conn = setup();
 
         let obj = MyEntity {
             id: UuidB64::new(),
@@ -356,14 +330,14 @@ mod diesel_tests {
 
         diesel::insert_into(my_entities)
             .values(&obj)
-            .execute(&conn)
+            .execute(&mut conn)
             .expect("Couldn't insert struct into my_entities");
 
-        let found: Vec<MyEntity> = my_entities.load(&conn).unwrap();
+        let found: Vec<MyEntity> = my_entities.load(&mut conn).unwrap();
         assert_eq!(found[0], obj);
 
         diesel::delete(my_entities.filter(id.eq(&obj.id)))
-            .execute(&conn)
+            .execute(&mut conn)
             .expect("Couldn't delete existing object");
     }
 }
