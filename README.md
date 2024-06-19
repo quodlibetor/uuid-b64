@@ -1,6 +1,6 @@
 # uuid-b64
 
-[![Build Status](https://travis-ci.org/quodlibetor/uuid-b64.svg?branch=master)](https://travis-ci.org/quodlibetor/uuid-b64)
+[![Push](https://github.com/quodlibetor/uuid-b64/actions/workflows/push.yml/badge.svg)](https://github.com/quodlibetor/uuid-b64/actions/workflows/push.yml)
 
 A UUID wrapper that has a base64 display and serialization
 
