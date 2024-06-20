@@ -38,7 +38,7 @@ impl<'de> Visitor<'de> for UuidB64Visitor {
     where
         E: de::Error,
     {
-        Ok(s.parse().map_err(de::Error::custom)?)
+        s.parse().map_err(de::Error::custom)
     }
 }
 
