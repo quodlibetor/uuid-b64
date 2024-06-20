@@ -35,8 +35,9 @@ jobs:
       - name: Set up Rust
         uses: moonrepo/setup-rust@v1
         with:
-          channel: ${{ matrix.rust-version }}
           bins: cargo-nextest
+          channel: ${{ matrix.rust-version }}
+          components: clippy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -47,3 +48,6 @@ jobs:
         run: cargo nextest run --features diesel-uuid,serde
         env:
           PG_DATABASE_URL: postgres://postgres:postgres@localhost/postgres
+
+      - name: Clippy
+        run: cargo clippy --features diesel-uuid,serde
