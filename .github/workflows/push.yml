@@ -16,6 +16,10 @@ jobs:
     strategy:
       matrix:
         rust-version: [stable, beta, nightly]
+        base64-version: [""]
+        include:
+          - rust-version: stable
+            base64-version: "0.21"
 
     services:
       postgres:
@@ -42,7 +46,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: cargo build --features diesel-uuid,serde
+        run: |
+          if [ -n "${{ matrix.base64-version }}" ] ; then
+            cargo remove base64
+            cargo add base64@${{ matrix.base64-version }}
+          fi
+
+          cargo build --features diesel-uuid,serde
 
       - name: Test
         run: cargo nextest run --features diesel-uuid,serde
