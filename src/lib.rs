@@ -147,7 +147,9 @@ impl UuidB64 {
         let mut buf = InlineString::from("0000000000000000000000"); // not actually zeroes
         unsafe {
             let raw_buf = buf.as_mut_slice();
-            URL_SAFE_NO_PAD.encode_slice(self.0.as_bytes(), &mut raw_buf[0..22]).unwrap();
+            URL_SAFE_NO_PAD
+                .encode_slice(self.0.as_bytes(), &mut raw_buf[0..22])
+                .unwrap();
         }
         buf
     }
@@ -184,10 +186,18 @@ impl FromStr for UuidB64 {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut output = [0; 16];
-        URL_SAFE_NO_PAD.decode_slice(s, &mut output)
+        URL_SAFE_NO_PAD
+            .decode_slice(s, &mut output)
             .chain_err(|| ErrorKind::ParseError(s.into()))?;
         let id = Uuid::from_bytes(output);
         Ok(UuidB64(id))
+    }
+}
+
+/// Construct a new V4 (random) UUID
+impl Default for UuidB64 {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
